@@ -1,7 +1,7 @@
 # Official PyTorch implementation of "Rebalanced Zero-shot Learning" [(TIP 2023 Paper)](https://arxiv.org/abs/2210.07031) #
 
 <div align="center">
-    <img width="800" alt="banner" src="assets/banner.png"/>
+    <img width="800" alt="banner" src="banner.png"/>
 </div>
 
 Zero-shot learning (ZSL) aims to identify unseen classes with zero samples during training.
@@ -18,7 +18,7 @@ This code is released under the MIT License. See [LICENSE](LICENSE) for addition
 Cite our paper using the following bibtex item:
 
 ```
-@inproceedings{
+@ARTICLE{
 ye2023rebalanced,
 title={Rebalanced Zero-shot Learning},
 author={Zihan Ye and Guanyu Yang and Xiaobo Jin and Youfa Liu and Kaizhu Huang},

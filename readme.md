@@ -1,7 +1,7 @@
 # Official PyTorch implementation of "Rebalanced Zero-shot Learning" [(TIP 2023 Paper)](https://arxiv.org/abs/2210.07031) #
 
 <div align="center">
-    <img width="800" alt="banner" src="banner.pdf"/>
+    <img width="800" alt="banner" src="assets/banner.png"/>
 </div>
 
 Zero-shot learning (ZSL) aims to identify unseen classes with zero samples during training.

@@ -1,0 +1,52 @@
+OUTPUT_DIR: "checkpoints/awa_16w_2s_original"
+LOG_FILE_NAME: "AttentionNet(vit224,mid:300,hid:0)_SGD(lr=1e-4)_NCE+0.1ReMSE(0.1,0.1)_seed=1514.log"
+MODEL_FILE_NAME: "AttentionNet(vit224,mid:300,hid:0)_SGD(lr=1e-4)_NCE+0.1ReMSE(0.1,0.1)_seed=1514.pth"
+SEED: 1514
+MODEL:
+  META_ARCHITECTURE: "AttentionNet"
+  SCALE: 20.0
+  HID_DIM: 0
+  BACKBONE:
+    PRETRAINED: True
+    FINETUNE: True
+    TYPE: 'vit'
+  ATTENTION:
+    CHANNEL: 512
+    WEIGHT_SHARED: True
+    W2V_PATH: "/Datasets/Attribute/w2v"
+  LOSS:
+    LAMBDA0: 1.0
+    LAMBDA1: 0.1
+    LAMBDA2: 0.0
+    LAMBDA3: 0.0
+    REG_NORM: True
+    REG_TYPE: "MSE"
+  REZSL:
+    USE: True
+    P: 0.1
+    P2: 0.1
+
+DATASETS:
+  NAME: "AWA2"
+  IMAGE_SIZE: 224
+  WAYS: 16
+  SHOTS: 2
+  SEMANTIC: 'original'
+  SEMANTIC_TYPE: 'GBU'
+
+DATALOADER:
+  MODE: 'episode'
+  N_BATCH: 300
+
+SOLVER:
+  MAX_EPOCH: 30
+  BASE_LR: 1e-4
+  WEIGHT_DECAY: 1e-5
+  MOMENTUM: 0.9
+  GAMMA: 0.5
+  STEPS: 10
+  DATA_AUG: "resize_random_crop"
+
+TEST:
+  IMS_PER_BATCH: 32
+  DATA_AUG: "resize_crop"

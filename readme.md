@@ -1,4 +1,4 @@
-# PyTorch implementation of "Rebalanced Zero-shot Learning" [(TIP 2023 Paper)] #
+# PyTorch implementation of "Rebalanced Zero-shot Learning" [TIP 2023 Paper] #
 
 **Paper:** https://arxiv.org/abs/2210.07031
 

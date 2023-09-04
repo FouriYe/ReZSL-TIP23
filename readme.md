@@ -3,7 +3,7 @@
 **Paper:** https://arxiv.org/abs/2210.07031
 
 <div align="center">
-    <img width="700" alt="teaser" src="assets/banner.png"/>
+    <img width="500" alt="teaser" src="assets/banner.png"/>
 </div>
 
 Zero-shot learning (ZSL) aims to identify unseen classes with zero samples during training.
@@ -55,15 +55,41 @@ Following table shows the results of our released models using various evaluatio
 | Dataset | T1 (ZSL) | U (GZSL) | S (GZSL) | H (GZSL) |
 | :-----: | :-----: | :-----: | :-----: | :-----: |
 | CUB | 80.9 | 72.8 | 74.8 | 73.8 |
-| SUN | 63.2 | 47.4 | 34.8 | 40.1 |
 | AWA2 | 70.9 | 63.8 | 85.6 | 73.1 |
+| SUN | 63.2 | 47.4 | 34.8 | 40.1 |
+
+## Usage of ReMSE
+Of course, our ReMSE could be easily apply to other regression or multi-modal tasks.
+We provide examples of how to apply ReMSE on other customized datasets and/or models:
+```python
+from REZSL.modeling import ReZSL, weighted_RegressLoss
+
+# customized training dataset
+tr_dataloader = ...
+# customized model and optimizer
+model, optimizer = ..., ... 
+# RegNorm: bool, l2-norm reg_label or not, RegType: 'MSE' or "BMC"
+Reg_loss = weighted_RegressLoss(RegNorm, RegType="MSE", device="cuda")
+
+for iteration, (batch_img, batch_reg_label, batch_cls_label) in enumerate(tr_dataloader):
+    reg_pred = model(x=batch_img)
+    n = reg_pred.shape[0]
+    ReZSL.updateWeightsMatrix_crossBatch(reg_pred.detach(), batch_reg_label.detach(), batch_cls_label.detach())
+    weights = ReZSL.getWeights(n, reg_label_dim, batch_cls_label.detach()).detach()  # weights matrix does not need gradients
+
+    loss = Reg_loss(reg_pred, batch_reg_label, weights)
+
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+```
 
 ## License
 
 This code is released under the MIT License. See [LICENSE](LICENSE) for additional details.
 
 ## Bibtex ##
-Cite our paper using the following bibtex item:
+If this work is helpful for you, please cite our paper:
 
 ```
 @inproceedings{
@@ -76,3 +102,8 @@ publisher={IEEE},
 year={2023}
 }
 ```
+
+## References
+Parts of our codes based on:
+* [osierboy/GEM-ZSL](https://github.com/osierboy/GEM-ZSL)
+* [YyzHarry/imbalanced-regression](https://github.com/YyzHarry/imbalanced-regression)

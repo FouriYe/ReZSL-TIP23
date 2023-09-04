@@ -1,0 +1,1 @@
+CUDA_VISIBLE_DEVICES=2 python ./tools/train.py --config-file config/AttentionNet/cub_16w_2s_AttentionNet.yaml

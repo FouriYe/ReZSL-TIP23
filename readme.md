@@ -46,7 +46,7 @@ Secondly, download extracted semantic-level word2Vec (https://drive.google.com/f
 
 To train and evaluate ZSL and GZSL models, please run the file `./tools/train.py` with the scripts in `./config/`, e.g.:
 ```
-CUDA_VISIBLE_DEVICES=2 python ./tools/train.py --config-file config/AttentionNet/cub_16w_2s_AttentionNet.yaml
+CUDA_VISIBLE_DEVICES=0 python ./tools/train.py --config-file config/AttentionNet/cub_16w_2s_AttentionNet.yaml
 ```
 
 ## Results
@@ -68,12 +68,13 @@ from REZSL.modeling import ReZSL, weighted_RegressLoss
 tr_dataloader = ...
 # customized model and optimizer
 model, optimizer = ..., ... 
-# RegNorm: bool, l2-norm reg_label or not, RegType: 'MSE' or "BMC"
+# RegNorm: bool type, l2-normalized reg_label or not, RegType: 'MSE' or "BMC"
 Reg_loss = weighted_RegressLoss(RegNorm, RegType="MSE", device="cuda")
 
 for iteration, (batch_img, batch_reg_label, batch_cls_label) in enumerate(tr_dataloader):
     reg_pred = model(x=batch_img)
     n = reg_pred.shape[0]
+    reg_label_dim = batch_reg_label.shape[1]
     ReZSL.updateWeightsMatrix_crossBatch(reg_pred.detach(), batch_reg_label.detach(), batch_cls_label.detach())
     weights = ReZSL.getWeights(n, reg_label_dim, batch_cls_label.detach()).detach()  # weights matrix does not need gradients
 

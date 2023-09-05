@@ -59,7 +59,7 @@ Following table shows the results of our released models using various evaluatio
 | SUN | 63.2 | 47.4 | 34.8 | 40.1 |
 
 ## Usage of ReMSE
-Of course, our ReMSE could be easily apply to other regression or multi-modal tasks.
+Of course, our ReMSE could be easily applied to other regression or multi-modal tasks.
 We provide examples of how to apply ReMSE on other customized datasets and/or models:
 ```python
 from REZSL.modeling import ReZSL, weighted_RegressLoss
@@ -71,12 +71,15 @@ model, optimizer = ..., ...
 # RegNorm: bool type, l2-normalized reg_label or not, RegType: 'MSE' or "BMC"
 Reg_loss = weighted_RegressLoss(RegNorm, RegType="MSE", device="cuda")
 
+rezsl = ReZSL(p=cfg.MODEL.REZSL.P, p2=cfg.MODEL.REZSL.P2, att_dim=reg_label_dim, train_class_num=scls_num,
+                  test_class_num=cls_num, RegNorm=RegNorm, RegType=RegType, device=device)
+
 for iteration, (batch_img, batch_reg_label, batch_cls_label) in enumerate(tr_dataloader):
     reg_pred = model(x=batch_img)
     n = reg_pred.shape[0]
     reg_label_dim = batch_reg_label.shape[1]
-    ReZSL.updateWeightsMatrix_crossBatch(reg_pred.detach(), batch_reg_label.detach(), batch_cls_label.detach())
-    weights = ReZSL.getWeights(n, reg_label_dim, batch_cls_label.detach()).detach()  # weights matrix does not need gradients
+    rezsl.updateWeightsMatrix_crossBatch(reg_pred.detach(), batch_reg_label.detach(), batch_cls_label.detach())
+    weights = rezsl.getWeights(n, reg_label_dim, batch_cls_label.detach()).detach()  # weights matrix does not need gradients
 
     loss = Reg_loss(reg_pred, batch_reg_label, weights)
 

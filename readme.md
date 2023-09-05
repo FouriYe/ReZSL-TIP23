@@ -78,7 +78,7 @@ for iteration, (batch_img, batch_reg_label, batch_cls_label) in enumerate(tr_dat
     reg_pred = model(x=batch_img)
     n = reg_pred.shape[0]
     reg_label_dim = batch_reg_label.shape[1]
-    rezsl.updateWeightsMatrix_crossBatch(reg_pred.detach(), batch_reg_label.detach(), batch_cls_label.detach())
+    rezsl.updateWeightsMatrix_crossBatch(reg_pred.detach(), batch_reg_label.detach(), batch_cls_label.detach()) # updateWeightsMatrix_crossBatch or updateWeightsMatrix_inBatch
     weights = rezsl.getWeights(n, reg_label_dim, batch_cls_label.detach()).detach()  # weights matrix does not need gradients
 
     loss = Reg_loss(reg_pred, batch_reg_label, weights)

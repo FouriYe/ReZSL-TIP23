@@ -25,6 +25,7 @@ MODEL:
     USE: True
     P: 0.0
     P2: 0.0
+    WEIGHT_TYPE: "cross_batch"
 
 DATASETS:
   NAME: "CUB"

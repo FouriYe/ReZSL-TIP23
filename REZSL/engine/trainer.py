@@ -75,7 +75,7 @@ def do_train(
 
                 if use_REZSL:
                     n = v2s.shape[0]
-                    ReZSL.updateWeightsMatrix_crossBatch(v2s.detach(), batch_att.detach(), batch_label.detach())
+                    ReZSL.updateWeightsMatrix(v2s.detach(), batch_att.detach(), batch_label.detach())
                     weights = ReZSL.getWeights(n, att_dim, batch_label.detach()).detach()  # weights matrix does not need gradients
                 else:
                     weights = None
@@ -103,7 +103,7 @@ def do_train(
 
                 if use_REZSL:
                     n = v2s.shape[0]
-                    ReZSL.updateWeightsMatrix_crossBatch(v2s.detach(), batch_att.detach(), batch_label.detach())
+                    ReZSL.updateWeightsMatrix(v2s.detach(), batch_att.detach(), batch_label.detach()) # or updateWeightsMatrix_inBatch
                     weights = ReZSL.getWeights(n, att_dim, batch_label.detach()).detach()  # weights matrix does not need gradients
                 else:
                     weights = None

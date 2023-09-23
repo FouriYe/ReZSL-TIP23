@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class ReZSL(nn.Module):
-    def __init__(self, p, p2, att_dim, train_class_num, test_class_num, RegNorm, RegType, device=None):
+    def __init__(self, p, p2, att_dim, train_class_num, test_class_num, RegNorm, RegType, WeightType, device=None):
         super(ReZSL, self).__init__()
         self.att_dim = att_dim
         self.train_class_num = train_class_num
@@ -12,6 +12,7 @@ class ReZSL(nn.Module):
         self.p2 = p2
         self.RegNorm = RegNorm
         self.RegType = RegType
+        self.WeightType = WeightType
         # training stage
         self.device = device
         self.running_offset_Matrix = torch.zeros(self.train_class_num, self.att_dim, requires_grad=False).to(self.device)
@@ -23,6 +24,12 @@ class ReZSL(nn.Module):
         self.test_cls_count = torch.zeros(self.test_class_num, dtype=torch.int64, requires_grad=False).to(self.device)
         self.test_cls_offset_mean = torch.zeros(self.test_class_num, self.att_dim, requires_grad=False).to(self.device)
         self.test_mean_value = torch.zeros(self.att_dim, requires_grad=False).to(self.device)
+
+    def updateWeightsMatrix(self, batch_pred, batch_truth, batch_label):
+        if self.WeightType=="in_batch":
+            self.updateWeightsMatrix_inBatch(batch_pred, batch_truth, batch_label)
+        elif self.WeightType=="cross_batch":
+            self.updateWeightsMatrix_inBatch(batch_pred, batch_truth, batch_label)
 
     def updateWeightsMatrix_inBatch(self, batch_pred, batch_truth, batch_label):
         self.running_offset_Matrix = self.arrangeTrainOffset(batch_pred, batch_truth, batch_label)

@@ -1,0 +1,53 @@
+OUTPUT_DIR: "checkpoints/sun_16w_2s"
+LOG_FILE_NAME: "AttentionNet(resnet,hid:0)_SGD(lr=5e-4)_NCE+1.0ReMSE(1.25,0.0)_seed=214.log"
+MODEL_FILE_NAME: "AttentionNet(resnet,hid:0)_SGD(lr=5e-4)_NCE_NCE+1.0ReMSE(1.25,0.0)_seed=214.pth"
+SEED: 214
+MODEL:
+  META_ARCHITECTURE: "AttentionNet"
+  SCALE: 25.0
+  HID_DIM: 0
+  BACKBONE:
+    PRETRAINED: True
+    FINETUNE: True
+    TYPE: 'resnet'
+  ATTENTION:
+    CHANNEL: 512
+    WEIGHT_SHARED: True
+    W2V_PATH: "/Data_PHD/phd22_zihan_ye/Dataset/Attribute/w2v"
+  LOSS:
+    LAMBDA0: 1.0
+    LAMBDA1: 1.0
+    LAMBDA2: 0.0
+    LAMBDA3: 0.0
+    REG_NORM: True
+    REG_TYPE: "MSE"
+  REZSL:
+    USE: True
+    P: 1.25
+    P2: 0.0
+    WEIGHT_TYPE: "in_batch"
+
+DATASETS:
+  NAME: "SUN"
+  IMAGE_SIZE: 448
+  WAYS: 16
+  SHOTS: 2
+  SEMANTIC: 'original'
+  SEMANTIC_TYPE: 'GBU'
+
+DATALOADER:
+  MODE: 'episode'
+  N_BATCH: 300
+
+SOLVER:
+  MAX_EPOCH: 30
+  BASE_LR: 5e-4
+  WEIGHT_DECAY: 1e-5
+  MOMENTUM: 0.9
+  GAMMA: 0.5
+  STEPS: 10
+  DATA_AUG: "resize_random_crop"
+
+TEST:
+  IMS_PER_BATCH: 32
+  DATA_AUG: "resize_crop"

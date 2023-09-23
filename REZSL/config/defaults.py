@@ -6,7 +6,7 @@ _C = CN()
 
 _C.MODEL = CN()
 _C.MODEL.DEVICE = "cuda"
-_C.MODEL.GPUS = [0,1]
+_C.MODEL.GPUS = [0]
 
 _C.MODEL.META_ARCHITECTURE = "BasicNet"
 _C.MODEL.NAME = ""

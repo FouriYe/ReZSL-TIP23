@@ -19,10 +19,7 @@ from REZSL.utils.comm import *
 
 from REZSL.utils import ReDirectSTD, set_seed
 
-try:
-    from apex import amp
-except ImportError:
-    raise ImportError('Use APEX for multi-precision via apex.amp')
+#from apex import amp
 
 def train_model(cfg, local_rank, distributed):
     device = cfg.MODEL.DEVICE
@@ -33,8 +30,8 @@ def train_model(cfg, local_rank, distributed):
     scheduler = make_lr_scheduler(cfg, optimizer, len(tr_dataloader))
 
     use_mixed_precision = cfg.DTYPE == "float16"
-    amp_opt_level = 'O1' if use_mixed_precision else 'O0'
-    model, optimizer = amp.initialize(model, optimizer, opt_level=amp_opt_level)
+    #amp_opt_level = 'O1' if use_mixed_precision else 'O0'
+    #model, optimizer = amp.initialize(model, optimizer, opt_level=amp_opt_level)
 
     model = torch.nn.DataParallel(model, device_ids=cfg.MODEL.GPUS).to(device)
 
@@ -45,10 +42,11 @@ def train_model(cfg, local_rank, distributed):
     test_gamma = cfg.TEST.GAMMA
     max_epoch = cfg.SOLVER.MAX_EPOCH
     use_REZSL = cfg.MODEL.REZSL.USE
+    WeightType = cfg.MODEL.REZSL.WEIGHT_TYPE
+
     RegNorm = cfg.MODEL.LOSS.REG_NORM
     RegType = cfg.MODEL.LOSS.REG_TYPE
     scale = cfg.MODEL.SCALE
-
 
     info = get_attributes_info(cfg.DATASETS.NAME, cfg.DATASETS.SEMANTIC_TYPE)
     attritube_num = info["input_dim"]
@@ -57,7 +55,7 @@ def train_model(cfg, local_rank, distributed):
     scls_num = cls_num - ucls_num
 
     rezsl = ReZSL(p=cfg.MODEL.REZSL.P, p2=cfg.MODEL.REZSL.P2, att_dim=attritube_num, train_class_num=scls_num,
-                  test_class_num=cls_num, RegNorm=RegNorm, RegType=RegType, device=device)
+                  test_class_num=cls_num, RegNorm=RegNorm, RegType=RegType, WeightType=WeightType, device=device)
 
     lamd = {
         0: cfg.MODEL.LOSS.LAMBDA0,

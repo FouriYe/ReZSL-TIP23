@@ -6,7 +6,7 @@ _C = CN()
 
 _C.MODEL = CN()
 _C.MODEL.DEVICE = "cuda"
-_C.MODEL.GPUS = [0]
+_C.MODEL.GPUS = [0,1]
 
 _C.MODEL.META_ARCHITECTURE = "BasicNet"
 _C.MODEL.NAME = ""
@@ -33,7 +33,7 @@ _C.MODEL.ATTENTION = CN()
 _C.MODEL.ATTENTION.MODE = 'add'  # 'add', 'concat'
 _C.MODEL.ATTENTION.CHANNEL = 512
 _C.MODEL.ATTENTION.WEIGHT_SHARED = True
-_C.MODEL.ATTENTION.W2V_PATH = "/Dataset/Attribute/w2v"
+_C.MODEL.ATTENTION.W2V_PATH = "/Data_PHD/phd22_zihan_ye/Dataset/Attribute/w2v"
 
 # -----------------------------------------------------------------------------
 # Loss
@@ -57,6 +57,7 @@ _C.MODEL.REZSL = CN()
 _C.MODEL.REZSL.USE = False
 _C.MODEL.REZSL.P = 0.0 # for imbalanced sample distributions
 _C.MODEL.REZSL.P2 = 0.0 # for learning difficulties
+_C.MODEL.REZSL.WEIGHT_TYPE = "cross_batch"
 
 # -----------------------------------------------------------------------------
 # Dataset

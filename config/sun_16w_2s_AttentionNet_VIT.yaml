@@ -25,11 +25,7 @@ MODEL:
     USE: True
     P: 1.0
     P2: 0.5
-    MOMENTUM: 0.0
-MW:
-  USE: False
-  AWARE: False
-  META_LR: 1.0
+    WEIGHT_TYPE: "cross_batch"
 
 DATASETS:
   NAME: "SUN"

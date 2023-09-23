@@ -25,6 +25,7 @@ MODEL:
     USE: True
     P: 0.1
     P2: 0.1
+    WEIGHT_TYPE: "cross_batch"
 
 DATASETS:
   NAME: "AWA2"

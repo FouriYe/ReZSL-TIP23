@@ -13,7 +13,7 @@ MODEL:
   ATTENTION:
     CHANNEL: 512
     WEIGHT_SHARED: True
-    W2V_PATH: "/Datasets/Attribute/w2v"
+    W2V_PATH: "/Dataset/Attribute/w2v"
   LOSS:
     LAMBDA0: 1.0
     LAMBDA1: 0.01

@@ -1,6 +1,6 @@
 OUTPUT_DIR: "checkpoints/awa_16w_2s"
-LOG_FILE_NAME: "AttentionNet(mid:300,hid:4096)_SGD(lr=5e-5)_NCE+1.0ReMSE(1.0,0.0)_seed=1514.log"
-MODEL_FILE_NAME: "AttentionNet(mid:300,hid:4096)_SGD(lr=5e-5)_NCE+1.0ReMSE(1.0,0.0)_seed=1514.pth"
+LOG_FILE_NAME: "AttentionNet(mid:300,hid:4096)_SGD(lr=1e-4)_NCE+1.0ReMSE(1.0,0.0)_seed=1514.log"
+MODEL_FILE_NAME: "AttentionNet(mid:300,hid:4096)_SGD(lr=1e-4)_NCE+1.0ReMSE(1.0,0.0)_seed=1514.pth"
 SEED: 1514
 MODEL:
   META_ARCHITECTURE: "AttentionNet"
@@ -40,7 +40,7 @@ DATALOADER:
 
 SOLVER:
   MAX_EPOCH: 30
-  BASE_LR: 5e-5
+  BASE_LR: 1e-4
   WEIGHT_DECAY: 1e-5
   MOMENTUM: 0.9
   GAMMA: 0.5

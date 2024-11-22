@@ -157,10 +157,14 @@ class ReZSL(nn.Module):
 
     def averageTestOffset(self):
         # averaging
+        num_valid_classes = 0
         for i in range(self.test_class_num):
             if self.test_cls_count[i] > 0:
                 self.test_cls_offset_mean[i] = self.test_cls_offset_sum[i] / self.test_cls_count[i]
-        self.test_mean_value = torch.mean(self.test_cls_offset_mean, dim=0)
+                num_valid_classes += 1
+        assert num_valid_classes>0
+        self.test_mean_value = torch.sum(self.test_cls_offset_mean, dim=0)
+        self.test_mean_value /= num_valid_classes
         return self.test_cls_offset_mean, self.test_mean_value
 
     def afterTest(self):

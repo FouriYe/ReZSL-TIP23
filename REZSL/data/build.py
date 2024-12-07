@@ -16,8 +16,8 @@ import copy
 
 class ImgDatasetParam(object):
     DATASETS = {
-        "imgroot": '/Data_PHD/phd22_zihan_ye/Dataset',
-        "dataroot": '/Data_PHD/phd22_zihan_ye/Dataset/xlsa17/data',
+        "imgroot": '/Dataset',
+        "dataroot": '/Dataset/xlsa17/data',
         "image_embedding": 'res101',
         "class_embedding": 'att'
     }

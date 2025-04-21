@@ -1,11 +1,11 @@
 OUTPUT_DIR: "checkpoints/awa_16w_2s_original"
-LOG_FILE_NAME: "AttentionNet(vit224,mid:300,hid:0)_SGD(lr=1e-4)_NCE+0.1ReMSE(0.1,0.1)_seed=1514.log"
-MODEL_FILE_NAME: "AttentionNet(vit224,mid:300,hid:0)_SGD(lr=1e-4)_NCE+0.1ReMSE(0.1,0.1)_seed=1514.pth"
+LOG_FILE_NAME: "AttentionNet(vit)_SGD(lr=1e-4)_NCE+0.1ReMSE(0.0,0.0)_seed=1514.log"
+MODEL_FILE_NAME: "AttentionNet(vit)_SGD(lr=1e-4)_NCE+0.1ReMSE(0.0,0.0)_seed=1514.pth"
 SEED: 1514
 MODEL:
   META_ARCHITECTURE: "AttentionNet"
   SCALE: 20.0
-  HID_DIM: 0
+  HID_DIM: 4096
   BACKBONE:
     PRETRAINED: True
     FINETUNE: True
@@ -23,9 +23,9 @@ MODEL:
     REG_TYPE: "MSE"
   REZSL:
     USE: True
-    P: 0.1
-    P2: 0.1
-    WEIGHT_TYPE: "cross_batch"
+    P: 0.0
+    P2: 0.0
+    WEIGHT_TYPE: "in_batch"
 
 DATASETS:
   NAME: "AWA2"

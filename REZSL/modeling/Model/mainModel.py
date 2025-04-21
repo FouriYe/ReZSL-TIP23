@@ -215,6 +215,82 @@ class BasicNet(nn.Module):
             for p in self.backbone.parameters():
                 p.requires_grad = False
 
+class CrossModalAttentionModule(nn.Module):
+    def __init__(self, hid_dim, c, w, h, attritube_num, w2v_length, ratio, device=None):
+        super(CrossModalAttentionModule, self).__init__()
+
+        self.feat_channel = c
+        self.feat_w = w
+        self.feat_h = h
+        self.feat_n = w * h
+
+        self.attritube_num = attritube_num
+        self.ratio = ratio
+        self.w2v_length = w2v_length
+
+        self.device = device
+
+        self.hid_dim = hid_dim
+
+        if attritube_num == 85:
+            self.med_dim = 300  # 1024
+            self.QueryW = nn.Sequential(nn.Linear(self.w2v_length, self.med_dim))  # L,M = 300,1024
+            self.KeyW = nn.Sequential(nn.Linear(self.feat_channel, self.med_dim))  # C,M = 2048,1024
+            self.ValueW = nn.Sequential(nn.Linear(self.feat_channel, self.med_dim))  # C,M = 2048,1024
+            self.W_o = nn.Sequential(nn.Linear(self.med_dim, self.feat_channel))  # M,C = 1024,2048
+        else:
+            self.med_dim = 1024  # 1024
+            self.QueryW = nn.Linear(self.w2v_length, self.med_dim)  # L,M = 300,1024
+            self.KeyW = nn.Linear(self.feat_channel, self.med_dim)  # C,M = 2048,1024
+            self.ValueW = nn.Linear(self.feat_channel, self.med_dim)  # C,M = 2048,1024
+            self.W_o = nn.Linear(self.med_dim, self.feat_channel)  # M,C = 1024,2048
+
+        # hidden layer or not
+        self.hid_dim = hid_dim
+        if self.hid_dim == 0:
+            self.V_att_final_branch = nn.Parameter(nn.init.normal_(torch.empty(self.attritube_num, self.feat_channel)),
+                                                   requires_grad=True)  # S, C
+        else:
+            self.V_att_hidden_branch = nn.Sequential(nn.Linear(self.feat_channel, self.hid_dim))  # H, C
+            self.V_att_final_branch = nn.Parameter(nn.init.normal_(torch.empty(self.attritube_num, self.hid_dim)),
+                                                   requires_grad=True)  # S, H
+
+    def forward(self, feat, att_emb, getAttention=False):
+
+        """
+        feat: [B, C, N=W*H]
+        class_att: [num_class, L]
+        """
+        B, C, N = feat.shape
+
+        # attention feature
+        att_emb = att_emb.to(torch.cuda.current_device())
+        query = self.QueryW(att_emb)  # [S, L]*[L,M] -> [S,M]
+        query_batch = query.unsqueeze(0).repeat(B, 1, 1)  # [S,M] -> [1,S,M] -> [B,S,M]
+        key = self.KeyW(feat.permute(0, 2, 1))  # [B, C, N+1] -> [B, N+1, C] -> [B, N+1, M]
+        value = self.ValueW(feat.permute(0, 2, 1))  # [B, C, N+1] -> [B, N+1, C] -> [B, N+1, M]
+
+        # attention = F.softmax(torch.matmul(query_batch, key.permute(0, 2, 1)) / (N ** 0.5), dim=2)  # [B,S,M],[B,N,M] -> [B,S,M],[B,M,N] -> [B, S, N]
+        attention = F.softmax(torch.matmul(query_batch, key.permute(0, 2, 1)) , dim=2)  # [B,S,M],[B,N,M] -> [B,S,M],[B,M,N] -> [B, S, N]
+        attented_feat = torch.matmul(attention, value)  # [B, S, N] * [B, N, M] -> [B,S,M]
+        attented_feat_o = self.W_o(attented_feat)  # [B,S,M] -> [B,S,C]
+
+        feat_pool = F.avg_pool1d(feat, kernel_size=(N))  # B, C
+        feat_reshape_repeat = feat_pool.view(B, 1, -1).expand(B, self.attritube_num, C)  # B, S, C
+        
+        attented_feat_final = feat_reshape_repeat + self.ratio * attented_feat_o  # [B,S,C]
+
+        # visual to semantic
+        if self.hid_dim == 0:
+            v2s = torch.einsum('BSC,SC->BS', attented_feat_final,
+                               self.V_att_final_branch)  # [B,312,2048] * [312, 2048] -> [B,312,2048] -> [B,312]
+        else:
+            attented_feat_hid = self.V_att_hidden_branch(attented_feat_final)  # [B,312,2048] -> [B,312,4096]
+            v2s = torch.einsum('BSH,SH->BS', attented_feat_hid, self.V_att_final_branch)
+        if getAttention:
+            return v2s, attention
+        else:
+            return v2s
 
 class AttentionNet(nn.Module):
     def __init__(self, backbone, backbone_type, ft_flag, img_size, hid_dim, c, w, h,
@@ -254,7 +330,7 @@ class AttentionNet(nn.Module):
                                   requires_grad=True)  # 300 * 2048
             self.V = nn.Parameter(nn.init.normal_(torch.empty(self.feat_channel, self.attritube_num)),
                                   requires_grad=True)
-            self.ratio = 0.125
+            self.ratio = 1.0
         else:
             self.ratio = 1.0
 
@@ -264,124 +340,34 @@ class AttentionNet(nn.Module):
         self.ft_flag = ft_flag
         self.check_fine_tune()
 
-        # local branch
-        if attritube_num == 85 and backbone_type=='resnet':
-            self.med_dim = 300 # 1024
-            self.QueryW = nn.Sequential(nn.Linear(self.w2v_length, self.med_dim)) # L,M = 300,1024
-            self.KeyW = nn.Sequential(nn.Linear(self.feat_channel, self.med_dim)) # C,M = 2048,1024
-            self.ValueW = nn.Sequential(nn.Linear(self.feat_channel, self.med_dim))  # C,M = 2048,1024
-            self.W_o = nn.Sequential(nn.Linear(self.med_dim, self.feat_channel)) # M,C = 1024,2048
-        else:
-            self.med_dim = 1024  # 1024
-            self.QueryW = nn.Linear(self.w2v_length, self.med_dim)  # L,M = 300,1024
-            self.KeyW = nn.Linear(self.feat_channel, self.med_dim)  # C,M = 2048,1024
-            self.ValueW = nn.Linear(self.feat_channel, self.med_dim)  # C,M = 2048,1024
-            self.W_o = nn.Linear(self.med_dim, self.feat_channel)  # M,C = 1024,2048
-
         # hidden layer or not
         self.hid_dim = hid_dim
-        if self.hid_dim == 0:
-            self.V_att_final_branch = nn.Parameter(nn.init.normal_(torch.empty(self.attritube_num, self.feat_channel)),
-                                                   requires_grad=True)  # S, C
+        self.v2s_branch = CrossModalAttentionModule(self.hid_dim, self.feat_channel, self.feat_w, self.feat_h, self.attritube_num, self.w2v_length, self.ratio, self.device)
+        if attention_type == "attention2":
+            self.v2con_branch = CrossModalAttentionModule2(self.hid_dim, self.feat_channel, self.feat_w, self.feat_h, self.k_select, self.w2v_length, self.ratio, self.device)
         else:
-            self.V_att_hidden_branch = nn.Sequential(nn.Linear(self.feat_channel, self.hid_dim))  # H, C
-            self.V_att_final_branch = nn.Parameter(nn.init.normal_(torch.empty(self.attritube_num, self.hid_dim)),
-                                                   requires_grad=True)  # S, H
+            self.v2con_branch = CrossModalAttentionModule(self.hid_dim, self.feat_channel, self.feat_w, self.feat_h, self.k_select, self.w2v_length, self.ratio, self.device)
+        self.sigmoid = nn.Sigmoid()
 
-    def forward(self, x, label_att=None, label=None, support_att=None, getAttention = False):
+    def forward(self, x, getAttention = False):
         if self.backbone_type=="resnet":
             feat = self.conv_features(x)  # B， 2048， 14， 14
-            if getAttention:
-                v2s, attentionMap = self.res_attention_module(feat, support_att, getAttention)  # B, 312
-                return v2s, attentionMap
-            else:
-                v2s = self.res_attention_module(feat, support_att)  # B,312
-                return v2s
+            B, C, W, H = feat.shape
+            N = W * H
+            W = H = int(N ** 0.5)
+            feat = feat.reshape(B, C, W * H)  # B, C, N=WH
         else:
             global_feat, patch_feat = self.conv_features(x)  # B, 2048, 14, 14
             patch_feat = patch_feat.permute(0, 2, 1)
             B,C = global_feat.shape
-            if getAttention:
-                v2s, attentionMap = self.vit_attention_module(global_feat.view(B,C,1), patch_feat, support_att, getAttention)  # B, 312
-                return v2s, attentionMap
-            else:
-                v2s = self.vit_attention_module(global_feat.view(B,C,1), patch_feat, support_att)  # B,312
-                return v2s
 
-    def vit_attention_module(self, global_feat, patch_feat, s, getAttention = False):
-        """
-        global_feat: [B, C, 1]
-        patch_feat: [B, C, N=W*H]
-        """
-        B, C, N = patch_feat.shape
-        W = H = int(N ** 0.5)
-        S, L = self.w2v_att.shape
-        M = self.med_dim
+            feat = torch.cat([global_feat.view(B, C, -1), patch_feat], dim=2)  # [B, C, N+1]
 
-        feat = torch.cat([global_feat,patch_feat],dim=2) # [B, C, N+1]
-
-        # attention feature
-        w2v_att = self.w2v_att.to(torch.cuda.current_device())
-        query = self.QueryW(w2v_att) # [S, L]*[L,M] -> [S,M]
-        query_batch = query.unsqueeze(0).repeat(B, 1, 1)  # [S,M] -> [1,S,M] -> [B,S,M]
-        key = self.KeyW(feat.permute(0, 2, 1))  # [B, C, N+1] -> [B, N+1, C] -> [B, N+1, M]
-        value = self.ValueW(feat.permute(0, 2, 1))  # [B, C, N+1] -> [B, N+1, C] -> [B, N+1, M]
-
-        attention = F.softmax(torch.matmul(query_batch, key.permute(0, 2, 1)),
-                              dim=2)  # [B,S,M],[B,N,M] -> [B,S,M],[B,M,N] -> [B, S, N]
-        attented_feat = torch.matmul(attention, value)  # [B, S, N] * [B, N, M] -> [B,S,M]
-        attented_feat_o = self.W_o(attented_feat)  # [B,S,M] -> [B,S,C]
-
-        feat_pool = F.avg_pool1d(feat, kernel_size=(N+1))  # B, C
-        feat_reshape_repeat = feat_pool.view(B, 1, -1).expand(B, self.attritube_num, C)  # B, S, C
-        attented_feat_final = feat_reshape_repeat + self.ratio * attented_feat_o  # [B,S,C]
-
-        # visual to semantic
-        if self.hid_dim == 0:
-            v2s = torch.einsum('BSC,SC->BS', attented_feat_final, self.V_att_final_branch)  # [B,312,2048] * [312, 2048] -> [B,312,2048] -> [B,312]
-        else:
-            attented_feat_hid = self.V_att_hidden_branch(attented_feat_final) # [B,312,2048] -> [B,312,4096]
-            v2s = torch.einsum('BSH,SH->BS', attented_feat_hid, self.V_att_final_branch)
         if getAttention:
-            return v2s, attention
+            v2s, attentionMap_att = self.v2s_branch(feat, self.w2v_att, getAttention)
+            return v2s, attentionMap_att
         else:
-            return v2s
-
-    def res_attention_module(self, feat, s, getAttention = False):
-        """
-        feat: [B, C, W, H]
-        """
-        B, C, W, H = feat.shape
-        N = W * H
-        S, L = self.w2v_att.shape
-        M = self.med_dim
-        W = H = int(N ** 0.5)
-        # attention feature
-        feat_reshape = feat.reshape(B, C, W * H)  # B, C, N=WH
-        w2v_att = self.w2v_att.to(torch.cuda.current_device())
-        query = self.QueryW(w2v_att) # [S, L]*[L,M] -> [S,M]
-        query_batch = query.unsqueeze(0).repeat(B, 1, 1)  # [S,M] -> [1,S,M] -> [B,S,M]
-        key = self.KeyW(feat_reshape.permute(0, 2, 1))  # [B, C, N] -> [B, N, C] -> [B, N, M]
-        value = self.ValueW(feat_reshape.permute(0, 2, 1))  # [B, C, N] -> [B, N, C] -> [B, N, M]
-
-        attention = F.softmax(torch.matmul(query_batch, key.permute(0, 2, 1)),
-                              dim=2)  # [B,S,M],[B,N,M] -> [B,S,M],[B,M,N] -> [B, S, N]
-        attented_feat = torch.matmul(attention, value)  # [B, S, N] * [B, N, M] -> [B,S,M]
-        attented_feat_o = self.W_o(attented_feat)  # [B,S,M] -> [B,S,C]
-
-        feat_pool = F.avg_pool2d(feat, kernel_size=(W, H)).view(B, 1, -1)  # B, C
-        feat_reshape_repeat = feat_pool.expand(B, self.attritube_num, C)  # B, S, C
-        attented_feat_final = feat_reshape_repeat + self.ratio * attented_feat_o  # [B,S,C]
-
-        # visual to semantic
-        if self.hid_dim == 0:
-            v2s = torch.einsum('BSC,SC->BS', attented_feat_final, self.V_att_final_branch)  # [B,312,2048] * [312, 2048] -> [B,312,2048] -> [B,312]
-        else:
-            attented_feat_hid = self.V_att_hidden_branch(attented_feat_final) # [B,312,2048] -> [B,312,4096]
-            v2s = torch.einsum('BSH,SH->BS', attented_feat_hid, self.V_att_final_branch)  # [B,312,4096] * [312, 4096] -> [B,312]
-        if getAttention:
-            return v2s, attention
-        else:
+            v2s = self.v2s_branch(feat, self.w2v_att)
             return v2s
 
     def conv_features(self, x):
@@ -394,29 +380,6 @@ class AttentionNet(nn.Module):
         elif self.backbone_type == 'vit':
             x, semantic_feat = self.backbone(x)  # if resnet, x: [b,w,h,2048], if vit x: [b,w,h,2048]
             return x, semantic_feat
-
-    def euclidean_dist(self, prediction, support_att, norm=False):
-        if norm == False:
-            N, S = prediction.shape
-            C, S = support_att.shape
-
-            support_att_expand = support_att.unsqueeze(0).expand(N, C, S)
-            prediction_expand = prediction.unsqueeze(1).expand(N, C, S)
-            offset = torch.sum((prediction_expand - support_att_expand) ** 2, dim=2)  # [N, C, S]-->[N,C]
-            return offset
-        else:
-            N, S = prediction.shape
-            C, S = support_att.shape
-            support_att_norm = torch.norm(support_att, p=2, dim=1).unsqueeze(1).expand_as(support_att)
-            support_att_normalized = support_att.div(support_att_norm + 1e-10)
-            prediction_norm = torch.norm(prediction, p=2, dim=1).unsqueeze(1).expand_as(prediction)
-            prediction_normalized = prediction.div(prediction_norm + 1e-10)
-
-            support_att_expand = support_att_normalized.unsqueeze(0).expand(N, C, S)
-            prediction_expand = prediction_normalized.unsqueeze(1).expand(N, C, S)
-            offset = torch.sum((prediction_expand - support_att_expand) ** 2, dim=2)  # [N, C, S]-->[N,C]
-
-            return offset
 
     def cosine_dis(self, pred_att, support_att):
         pred_att_norm = torch.norm(pred_att, p=2, dim=1).unsqueeze(1).expand_as(pred_att)

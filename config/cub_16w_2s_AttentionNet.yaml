@@ -1,6 +1,6 @@
 OUTPUT_DIR: "checkpoints/cub_16w_2s"
-LOG_FILE_NAME: "AttentionNet(resnet,hid:0)_SGD(lr=5e-4)_NCE+0.1ReMSE(0.75,0.0)_seed=214.log"
-MODEL_FILE_NAME: "AttentionNet(resnet,hid:0)_SGD(lr=5e-4)_NCE+0.1ReMSE(0.75,0.0)_seed=214.pth"
+LOG_FILE_NAME: "AttentionNet(resnet,hid:0)_SGD(lr=5e-4)_NCE+0.1ReMSE(0.0,0.0)_seed=214.log"
+MODEL_FILE_NAME: "AttentionNet(resnet,hid:0)_SGD(lr=5e-4)_NCE+0.1ReMSE(0.0,0.0)_seed=214.pth"
 SEED: 214
 MODEL:
   META_ARCHITECTURE: "AttentionNet"
@@ -23,9 +23,9 @@ MODEL:
     REG_TYPE: "MSE"
   REZSL:
     USE: True
-    P: 0.75
+    P: 0.0
     P2: 0.0
-    WEIGHT_TYPE: "cross_batch"
+    WEIGHT_TYPE: "in_batch"
 
 DATASETS:
   NAME: "CUB"

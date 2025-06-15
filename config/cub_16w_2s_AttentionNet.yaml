@@ -1,6 +1,6 @@
 OUTPUT_DIR: "checkpoints/cub_16w_2s"
-LOG_FILE_NAME: "AttentionNet(resnet,hid:0)_SGD(lr=5e-4)_NCE+0.1ReMSE(0.0,0.0)_seed=214.log"
-MODEL_FILE_NAME: "AttentionNet(resnet,hid:0)_SGD(lr=5e-4)_NCE+0.1ReMSE(0.0,0.0)_seed=214.pth"
+LOG_FILE_NAME: "AttentionNet(resnet,hid:0)_SGD(lr=5e-4)_NCE+0.25ReMSE(0.1,0.75)_seed=214.log"
+MODEL_FILE_NAME: "AttentionNet(resnet,hid:0)_SGD(lr=5e-4)_NCE+0.25ReMSE(0.1,0.75)_seed=214.pth"
 SEED: 214
 MODEL:
   META_ARCHITECTURE: "AttentionNet"
@@ -16,15 +16,15 @@ MODEL:
     W2V_PATH: "/Dataset/Attribute/w2v"
   LOSS:
     LAMBDA0: 1.0
-    LAMBDA1: 0.1
+    LAMBDA1: 0.25
     LAMBDA2: 0.0
     LAMBDA3: 0.0
     REG_NORM: True
     REG_TYPE: "MSE"
   REZSL:
     USE: True
-    P: 0.0
-    P2: 0.0
+    P: 0.1
+    P2: 0.75
     WEIGHT_TYPE: "in_batch"
 
 DATASETS:

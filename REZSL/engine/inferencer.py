@@ -17,7 +17,7 @@ def inference(model,dataloadr,support_att,ReZSL,device):
         img = img.to(device)
         label = label.to(device)
         label_att = label_att.to(device)
-        v2s = model(x=img, support_att=support_att, )
+        v2s = model(x=img)
         if model.module == None:
             score, cos_dist = model.cosine_dis(pred_att=v2s, support_att=support_att)
         else:

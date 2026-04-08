@@ -71,7 +71,7 @@ def do_train(
                 print('index: (%d, %d), max weight: %.4f, corresponding offset: %.4f, max offset: %.4f'%(d1, d2, ReZSL.running_weights_Matrix[d1][d2], ReZSL.running_offset_Matrix[d1][d2], torch.max(ReZSL.running_offset_Matrix)))
 
             if model_type =="BasicNet" or model_type =="AttentionNet":
-                v2s = model(x=batch_img, support_att=support_att_seen)
+                v2s = model(x=batch_img)
 
                 if use_REZSL:
                     n = v2s.shape[0]
@@ -99,7 +99,7 @@ def do_train(
                 print(log_info)
 
             if model_type =="GEMNet":
-                v2s, atten_v2s, atten_map, query = model(x=batch_img, support_att=support_att_seen)
+                v2s, atten_v2s, atten_map, query = model(x=batch_img)
 
                 if use_REZSL:
                     n = v2s.shape[0]

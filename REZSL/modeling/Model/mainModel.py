@@ -42,11 +42,11 @@ class GEMNet(nn.Module):
 
         self.V = nn.Sequential(nn.Linear(self.feat_channel, self.attritube_num))  # V, S = [2048,4096]
 
-    def forward(self, x, att=None, label=None, support_att=None):
+    def forward(self, x, att=None, label=None):
 
         feat = self.conv_features(x)  # N， 2048， 14， 14
 
-        v2s = self.base_module(feat, support_att)  # N, d
+        v2s = self.base_module(feat)  # N, d
 
         part_feat, atten_map, atten_v2s, query = self.attentionModule(feat)
 
@@ -55,7 +55,7 @@ class GEMNet(nn.Module):
 
         return v2s, atten_v2s, atten_map, query
 
-    def base_module(self, x, seen_att):
+    def base_module(self, x):
 
         N, C, W, H = x.shape
         global_feat = F.avg_pool2d(x, kernel_size=(W, H))
@@ -343,10 +343,6 @@ class AttentionNet(nn.Module):
         # hidden layer or not
         self.hid_dim = hid_dim
         self.v2s_branch = CrossModalAttentionModule(self.hid_dim, self.feat_channel, self.feat_w, self.feat_h, self.attritube_num, self.w2v_length, self.ratio, self.device)
-        if attention_type == "attention2":
-            self.v2con_branch = CrossModalAttentionModule2(self.hid_dim, self.feat_channel, self.feat_w, self.feat_h, self.k_select, self.w2v_length, self.ratio, self.device)
-        else:
-            self.v2con_branch = CrossModalAttentionModule(self.hid_dim, self.feat_channel, self.feat_w, self.feat_h, self.k_select, self.w2v_length, self.ratio, self.device)
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x, getAttention = False):

@@ -33,7 +33,7 @@ _C.MODEL.ATTENTION = CN()
 _C.MODEL.ATTENTION.MODE = 'add'  # 'add', 'concat'
 _C.MODEL.ATTENTION.CHANNEL = 512
 _C.MODEL.ATTENTION.WEIGHT_SHARED = True
-_C.MODEL.ATTENTION.W2V_PATH = "/Data_PHD/phd22_zihan_ye/Dataset/Attribute/w2v"
+_C.MODEL.ATTENTION.W2V_PATH = "/Dataset/Attribute/w2v"
 
 # -----------------------------------------------------------------------------
 # Loss
